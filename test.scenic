@@ -1,0 +1,20 @@
+param map = localPath('../Scenic/assets/maps/CARLA/Town05.xodr')
+param carla_map = 'Town05'
+param time_step = 1.0/10
+
+model scenic.domains.driving.model
+
+ego = new Car
+
+rightCurb = ego.laneGroup.curb
+spot = new OrientedPoint on visible rightCurb
+
+parkedCar = new Car left of spot by 0.5
+drivingCar = new Car behind parkedCar by 4, 
+                    with behavior FollowLaneBehavior(laneToFollow=ego.laneGroup.lanes[len(ego.laneGroup.lanes)-1])
+
+require always parkedCar not in intersection
+require always ((distance to parkedCar) > 8)
+require always (ego.lane == ego.laneGroup.lanes[len(ego.laneGroup.lanes)-1])
+
+terminate after 3 seconds
