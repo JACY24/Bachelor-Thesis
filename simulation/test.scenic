@@ -9,9 +9,17 @@ ego = new Car
 rightCurb = ego.laneGroup.curb
 spot = new OrientedPoint on visible rightCurb
 
+
+# behavior turnCar():
+#     while True:
+#         take 
+
 parkedCar = new Car left of spot by 0.5
 drivingCar = new Car behind parkedCar by 4, 
                     with behavior FollowLaneBehavior(laneToFollow=ego.laneGroup.lanes[len(ego.laneGroup.lanes)-1])
+
+record round(drivingCar.heading, 4) as drivingHeading
+#record round(drivingCar.heading, 4) as drivingCarHeading
 
 require always parkedCar not in intersection
 require always ((distance to parkedCar) > 8)
