@@ -10,7 +10,7 @@ A repo contianing my bachelor thesis
   ```
   On windows:
   ```PowerShell
-  .\venv\Scripts\activate.bat
+  .\venv\Scripts\activate
   ```
 
 - To run a driving example from the Scenic examples:
