@@ -1,15 +1,19 @@
 # Bachelor-Thesis
 A repo contianing my bachelor thesis
 
+# Setup
+
+First download Scenic locally according to [the guide on the website](https://scenic-lang.readthedocs.io/en/latest/quickstart.html).
+
 ## Convenient tricks
 - To start the virtual environment:
 
-  On Linux:
+  > On Linux:
   ```bash
   source venv/bin/activate
   ```
-  On windows:
-  ```PowerShell
+  > On windows:
+  ```powershell
   .\venv\Scripts\activate
   ```
 
@@ -20,4 +24,10 @@ A repo contianing my bachelor thesis
     --simulate \
     --model scenic.simulators.newtonian.driving_model \
     --time 200
+  ```
+
+- To Run the test
+  > On Linux and windows
+  ```bash
+  python[version] ./simulation/test.py
   ```
