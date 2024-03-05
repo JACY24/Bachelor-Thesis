@@ -15,11 +15,12 @@ spot = new OrientedPoint on visible rightCurb
 #         take 
 
 parkedCar = new Car left of spot by 0.5
-drivingCar = new Car behind parkedCar by 7, 
+drivingCar = new Car behind parkedCar by 3, 
                     with behavior FollowLaneBehavior(laneToFollow=ego.laneGroup.lanes[len(ego.laneGroup.lanes)-1])
 
 record initial round(parkedCar.heading, 4) as parkedCarHeading
 record round(drivingCar.heading, 4) as drivingCarHeading
+record round(((distance from drivingCar.position to parkedCar.position)), 4) as distance
 
 require always parkedCar not in intersection
 require always ((distance to parkedCar) > 8)

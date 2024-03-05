@@ -1,9 +1,14 @@
 import scenic
+import math
+import matplotlib.pyplot as plt
+import geopandas as gpd
+
 from scenic.simulators.newtonian import NewtonianSimulator
-from math import dist, degrees, cos, sin
+from scenic.domains.driving.roads import Network
 from shapely.geometry import Polygon
 
-NUM_SIMULATIONS = 20
+
+NUM_SIMULATIONS = 3
 CAR_WIDTH = 2
 CAR_LENGTH = 4.5
 
@@ -22,10 +27,10 @@ def print_dict(dictionary: dict) -> None:
     '''
     for key in dictionary.keys():
         print(key, end=": ")
-        print(list(map(lambda x: (x[0], degrees(x[1])) , dictionary[key])))
+        print(list(map(lambda x: (x[0], math.degrees(x[1])) , dictionary[key])))
 
 
-def calculateRotatedPoint(point: tuple[float, float], centerCoords: tuple[float, float], theta: float) -> tuple[float,float]:
+def calculateRotatedPoint(point: tuple[float, float], center: tuple[float, float], theta: float) -> tuple[float,float]:
     '''
     Calculates a coordinate, rotateted theta degrees around a centerpoint
 
@@ -45,13 +50,11 @@ def calculateRotatedPoint(point: tuple[float, float], centerCoords: tuple[float,
     rotatedPoint : (float, float)
         the coordinate of the rotated point    
     '''
-    tempX = point[0] - centerCoords[0]
-    tempY = point[1]- centerCoords[1]
 
-    rotatedX = tempX*cos(theta) - tempY*sin(theta)
-    rotatedY = tempX*sin(theta) + tempY*sin(theta)
+    rotatedX = (point[0] - center[0])*math.cos(theta) - (point[1]-center[1])*math.sin(theta) + center[0]
+    rotatedY = (point[0] - center[0])*math.sin(theta) + (point[1]-center[1])*math.cos(theta) + center[1]
 
-    return (rotatedX+centerCoords[0], rotatedY+centerCoords[1])
+    return (rotatedX, rotatedY)
 
 
 def createRotatedRectangle(center: tuple[float,float], length: float, width: float, theta: float) -> Polygon:
@@ -77,34 +80,45 @@ def createRotatedRectangle(center: tuple[float,float], length: float, width: flo
     rotatedRectangle : shapely.geometry.Polygon
         A polygon representing a rotated rectangle
     '''
-    topRightX = center[0] + 0.5*length + 0.5*width
-    topLeftX = center[0] + 0.5*length - 0.5*width
-    bottomRightX = center[0] - 0.5*length + 0.5*width
-    bottomLeftX = center[0] - 0.5*length - 0.5*width
+    topRightX = center[0] + 0.5*width
+    topLeftX = center[0] - 0.5*width
+    bottomRightX = center[0] + 0.5*width
+    bottomLeftX = center[0] - 0.5*width
 
-    topRightY = center[1] + 0.5*length + 0.5*width
-    topLeftY = center[1] + 0.5*length - 0.5*width
-    bottomRightY = center[1] - 0.5*length + 0.5*width
-    bottomLeftY = center[1] - 0.5*length - 0.5*width
+    topRightY = center[1] + 0.5*length
+    topLeftY = center[1] + 0.5*length
+    bottomRightY = center[1] - 0.5*length
+    bottomLeftY = center[1] - 0.5*length
+
+    if theta < 0:
+        theta = 2*math.pi - abs(theta)
 
     topRightCoord = calculateRotatedPoint((topRightX, topRightY), center, theta)
     bottomRightCoord = calculateRotatedPoint((bottomRightX, bottomRightY), center, theta)
     topLeftCoord = calculateRotatedPoint((topLeftX, topLeftY), center, theta)
     bottomLeftCoord = calculateRotatedPoint((bottomLeftX, bottomLeftY), center, theta)
 
-    return Polygon([bottomLeftCoord, topLeftCoord, topRightCoord, bottomRightCoord])
+    return Polygon([bottomLeftCoord, 
+                    topLeftCoord, 
+                    topRightCoord, 
+                    bottomRightCoord,
+                    ])
 
 
 scenario = scenic.scenarioFromFile('simulation/test.scenic',
                                    model='scenic.simulators.newtonian.driving_model',
                                    mode2D=True)
 scene, _ = scenario.generate()
-simulator = NewtonianSimulator()
+network = Network.fromFile('../Scenic/assets/maps/CARLA/Town05.xodr')
+simulator = NewtonianSimulator(network, render=True)
+# simulator = NewtonianSimulator()
+
 collisions = []
 
 for i in range(NUM_SIMULATIONS):
     scene, _ = scenario.generate()
     simulation = simulator.simulate(scene, maxIterations = 10)
+
 
     if simulation:  # `simulate` can return None if simulation fails
         result = simulation.result
@@ -114,6 +128,7 @@ for i in range(NUM_SIMULATIONS):
         parkedCarHeading = result.records['parkedCarHeading']
         # The driving car heading (a list of tuples per time step)
         drivingCarHeading = result.records['drivingCarHeading']
+        # print(result.records['distance'])
 
         # go through each time step and check if the cars intersect at some point
         for j, state in enumerate(result.trajectory):
@@ -127,6 +142,12 @@ for i in range(NUM_SIMULATIONS):
 
             if parkedCar.intersects(drivingCar):
                 collided = True
+                ax = plt.axes()
+                p1 = gpd.GeoSeries([parkedCar])
+                p1.boundary.plot(ax=ax)
+                p2 = gpd.GeoSeries([drivingCar])
+                p2.boundary.plot(ax=ax)
+                plt.show()
                 break
 
         collisions.append((i, collided))
@@ -142,4 +163,6 @@ for collision in collisions:
 # hoe goed is de monitor: remmen na 0.3s bij piepje: botsing of niet?
 # zelf monitor schrijven
 # data opslaan
+# half kantje problem statement
+# slack channel scenic
     
