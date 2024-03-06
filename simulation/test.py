@@ -150,12 +150,12 @@ def main():
                 # Check if the cars intersect at the current timestep
                 if parkedCar.intersects(drivingCar):
                     collided = True
-                    # ax = plt.axes()
-                    # p1 = gpd.GeoSeries([parkedCar])
-                    # p1.boundary.plot(ax=ax)
-                    # p2 = gpd.GeoSeries([drivingCar])
-                    # p2.boundary.plot(ax=ax)
-                    # plt.show()
+                    ax = plt.axes()
+                    p1 = gpd.GeoSeries([parkedCar])
+                    p1.boundary.plot(ax=ax)
+                    p2 = gpd.GeoSeries([drivingCar])
+                    p2.boundary.plot(ax=ax)
+                    plt.show()
                     break
 
             # Update the collisions list
