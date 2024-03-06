@@ -8,9 +8,13 @@ from scenic.domains.driving.roads import Network
 from shapely.geometry import Polygon
 
 
-NUM_SIMULATIONS = 3
+NUM_SIMULATIONS = 10
 CAR_WIDTH = 2
 CAR_LENGTH = 4.5
+SCENARIO = scenic.scenarioFromFile('simulation/test.scenic',
+                                    model='scenic.simulators.newtonian.driving_model',
+                                    mode2D=True)
+
 
 def print_dict(dictionary: dict) -> None:
     ''' Prints a dictionary of records
@@ -105,56 +109,64 @@ def createRotatedRectangle(center: tuple[float,float], length: float, width: flo
                     ])
 
 
-scenario = scenic.scenarioFromFile('simulation/test.scenic',
-                                   model='scenic.simulators.newtonian.driving_model',
-                                   mode2D=True)
-scene, _ = scenario.generate()
-network = Network.fromFile('../Scenic/assets/maps/CARLA/Town05.xodr')
-simulator = NewtonianSimulator(network, render=True)
-# simulator = NewtonianSimulator()
+def main():
+    
+    # Setup the simulation
+    network = Network.fromFile('../Scenic/assets/maps/CARLA/Town05.xodr')
+    simulator = NewtonianSimulator(network, render=True)
+    # simulator = NewtonianSimulator()
 
-collisions = []
+    # initialise collisions list
+    collisions = []
 
-for i in range(NUM_SIMULATIONS):
-    scene, _ = scenario.generate()
-    simulation = simulator.simulate(scene, maxIterations = 10)
-
-
-    if simulation:  # `simulate` can return None if simulation fails
-        result = simulation.result
+    # Execute NUM_SIMULATIONS simulations and evaluate them
+    for i in range(NUM_SIMULATIONS):
+        scene, _ = SCENARIO.generate()
+        simulation = simulator.simulate(scene, maxIterations = 10)
 
 
-        # The parked car heading (1 value per simulation)
-        parkedCarHeading = result.records['parkedCarHeading']
-        # The driving car heading (a list of tuples per time step)
-        drivingCarHeading = result.records['drivingCarHeading']
-        # print(result.records['distance'])
+        if simulation:  # `simulate` can return None if simulation fails
+            # The result of the simulation
+            result = simulation.result
 
-        # go through each time step and check if the cars intersect at some point
-        for j, state in enumerate(result.trajectory):
-            # positions of the cars
-            _, parkedCarPos, drivingCarPos = state
+            # The parked car heading (1 value per simulation)
+            parkedCarHeading = result.records['parkedCarHeading']
+            # The driving car heading (a list of tuples per time step)
+            drivingCarHeading = result.records['drivingCarHeading']
+            # Print(result.records['distance'])
 
-            collided = False
+            # Go through each time step and check if the cars intersect at some point
+            for j, state in enumerate(result.trajectory):
+                # Positions of the cars
+                _, parkedCarPos, drivingCarPos = state
 
-            parkedCar = createRotatedRectangle(parkedCarPos, CAR_LENGTH, CAR_WIDTH, parkedCarHeading)
-            drivingCar = createRotatedRectangle(drivingCarPos, CAR_LENGTH, CAR_WIDTH, drivingCarHeading[j][1])
+                # Cars have not collided at the start of the simulation
+                collided = False
 
-            if parkedCar.intersects(drivingCar):
-                collided = True
-                ax = plt.axes()
-                p1 = gpd.GeoSeries([parkedCar])
-                p1.boundary.plot(ax=ax)
-                p2 = gpd.GeoSeries([drivingCar])
-                p2.boundary.plot(ax=ax)
-                plt.show()
-                break
+                # Create polygons of the cars
+                parkedCar = createRotatedRectangle(parkedCarPos, CAR_LENGTH, CAR_WIDTH, parkedCarHeading)
+                drivingCar = createRotatedRectangle(drivingCarPos, CAR_LENGTH, CAR_WIDTH, drivingCarHeading[j][1])
 
-        collisions.append((i, collided))
+                # Check if the cars intersect at the current timestep
+                if parkedCar.intersects(drivingCar):
+                    collided = True
+                    # ax = plt.axes()
+                    # p1 = gpd.GeoSeries([parkedCar])
+                    # p1.boundary.plot(ax=ax)
+                    # p2 = gpd.GeoSeries([drivingCar])
+                    # p2.boundary.plot(ax=ax)
+                    # plt.show()
+                    break
+
+            # Update the collisions list
+            collisions.append((i, collided))
+
+    # Print the result of the analyses
+    for collision in collisions:
+        print(f'Simulation {collision[0]}: Cars collide: {collision[1]}')
 
 
-for collision in collisions:
-    print(f'Simulation {collision[0]}: Cars collide: {collision[1]}')
+main()
 
 # TODO:
 # marges auto inbouwen
@@ -165,4 +177,3 @@ for collision in collisions:
 # data opslaan
 # half kantje problem statement
 # slack channel scenic
-    
