@@ -15,8 +15,11 @@ drivingCar = new Car behind parkedCar by 3,
 
 record initial round(parkedCar.heading, 4) as parkedCarHeading
 record round(drivingCar.heading, 4) as drivingCarHeading
+record parkedCar as parkedCar
+record drivingCar as drivingCar
+record drivingCar.intersects(parkedCar) as intersecting
 
-require always parkedCar not in intersection
+# require always parkedCar not in intersection
 require always ((distance to parkedCar) > 8)
 
 terminate after 3 seconds

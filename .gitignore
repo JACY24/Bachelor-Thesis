@@ -1,8 +1,8 @@
 # ignore virtual environment and local scenic install
 venv/
 Scenic/
-simulation/mail.txt
+
 
 # ignore .zip files
 *.zip
-
+mail.txt

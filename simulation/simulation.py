@@ -108,26 +108,31 @@ def createRotatedRectangle(center: tuple[float,float], length: float, width: flo
                     bottomRightCoord,
                     ])
 
-
 def main():
     
     # Setup the simulation
-    network = Network.fromFile('../Scenic/assets/maps/CARLA/Town05.xodr')
-    simulator = NewtonianSimulator(network, render=True)
+    network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')
+    simulator = NewtonianSimulator(network, render=False)
     # simulator = NewtonianSimulator()
 
     # initialise collisions list
     collisions = []
+    myCollisions = []
 
     # Execute NUM_SIMULATIONS simulations and evaluate them
     for i in range(NUM_SIMULATIONS):
         scene, _ = SCENARIO.generate()
         simulation = simulator.simulate(scene, maxIterations = 10)
 
-
         if simulation:  # `simulate` can return None if simulation fails
             # The result of the simulation
             result = simulation.result
+ 
+            collisions.append((i, False, -1))
+            for timestep, collision in result.records['intersecting']:
+                if collision:
+                    collisions[i] = (i, True, timestep)
+                    break
 
             # The parked car heading (1 value per simulation)
             parkedCarHeading = result.records['parkedCarHeading']
@@ -150,26 +155,35 @@ def main():
                 # Check if the cars intersect at the current timestep
                 if parkedCar.intersects(drivingCar):
                     collided = True
-                    ax = plt.axes()
-                    p1 = gpd.GeoSeries([parkedCar])
-                    p1.boundary.plot(ax=ax)
-                    p2 = gpd.GeoSeries([drivingCar])
-                    p2.boundary.plot(ax=ax)
-                    plt.show()
+                    # ax = plt.axes()
+                    # p1 = gpd.GeoSeries([parkedCar])
+                    # p1.boundary.plot(ax=ax)
+                    # p2 = gpd.GeoSeries([drivingCar])
+                    # p2.boundary.plot(ax=ax)
+                    # plt.show()
                     break
 
             # Update the collisions list
-            collisions.append((i, collided))
+            myCollisions.append((i, collided))
+            
+
+    simulator.destroy()
 
     # Print the result of the analyses
-    for collision in collisions:
-        print(f'Simulation {collision[0]}: Cars collide: {collision[1]}')
 
+    for i in range(len(collisions)):
+        scenicCol = collisions[i]
+        myCol = myCollisions[i]
+
+        print(f'\tSimulation {scenicCol[0]}: Cars collide:\t {scenicCol[1]} \tat timestep {scenicCol[2]}')
+        print(f'(calc)\tSimulation {myCol[0]}: Cars collide:\t {myCol[1]}')
 
 main()
 
-# TODO:
+# DONE:
 # marges auto inbouwen
+
+# TODO:
 # meer relevante data: snelheid? gas/throttle?
     
 # hoe goed is de monitor: remmen na 0.3s bij piepje: botsing of niet?
@@ -177,3 +191,6 @@ main()
 # data opslaan
 # half kantje problem statement
 # slack channel scenic
+
+
+# ISSUE Scenic
