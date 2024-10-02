@@ -1,8 +1,7 @@
-# ignore virtual environment and local scenic install
-venv/
+# ignore local scenic install
 Scenic/
 
 
-# ignore .zip files
-*.zip
-mail.txt
+# ignore . files
+.*
+!.gitnore
