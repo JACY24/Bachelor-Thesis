@@ -14,10 +14,10 @@ ego = new Car left of spot by 0.5,
                     with behavior FollowLaneBehavior(laneToFollow=select_lanegroup.lanes[0])
 parkedCar = new Car ahead of ego by 3
 
-record initial round(parkedCar.heading, 4) as parkedCarHeading
 record round(ego.heading, 4) as drivingCarHeading
 record ego.intersects(parkedCar) as intersecting
 record ego.corners as drivingCorners
 record parkedCar.corners as parkedCorners
+record ego.speed as speed
 
 terminate after 3 seconds
