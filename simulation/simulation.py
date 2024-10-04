@@ -1,12 +1,7 @@
 import scenic
-import math
-import matplotlib.pyplot as plt
-import geopandas as gpd
 
 from scenic.simulators.newtonian import NewtonianSimulator
 from scenic.domains.driving.roads import Network
-from shapely.geometry import Polygon
-
 
 NUM_SIMULATIONS = 5
 CAR_WIDTH = 2
@@ -15,41 +10,39 @@ SCENARIO = scenic.scenarioFromFile('simulation/test.scenic',
                                     model='scenic.simulators.newtonian.driving_model',
                                     mode2D=True)
 
-def main():
-    
-    # Setup the simulation
-    network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')
-    simulator = NewtonianSimulator(network, render=True)
-
-    # initialise collisions list
-    collisions = []
+def exec_simulation(network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')):
+    simulator = NewtonianSimulator(network, render=False)
 
     # Execute NUM_SIMULATIONS simulations and evaluate them
-    for i in range(NUM_SIMULATIONS):
-        scene, _ = SCENARIO.generate()
-        simulation = simulator.simulate(scene, maxIterations = 10)
+    scene, _ = SCENARIO.generate()
+    simulation = simulator.simulate(scene, maxIterations = 10)
 
-        if simulation:  # `simulate` can return None if simulation fails
-            # The result of the simulation
-            result = simulation.result
- 
-            collisions.append((i, False, -1))
-            for timestep, collision in result.records['intersecting']:
-                if collision:
-                    collisions[i] = (i, True, timestep)
-                    break
+    if simulation:  # `simulate` can return None if simulation fails
+        # The result of the simulation
+        result = simulation.result
+
+        collided = (False, -1)
+        for timestep, collision in result.records['intersecting']:
+            if collision:
+                collided = (True, timestep)
+                break
 
     simulator.destroy()
-    
-    different = False
-    # Print the result of the analyses
-    for collision in collisions:
-        print(f'{collision[0]}: {f"   collision at timestep {collision[2]}" if collision[1] else "no collision"}')
-        if collision[2] != -1 and collision[2] != 14:
-            different = True
-    
-    print(f'{"Something different happened!" if different else "Always at step 14"}')
 
+    return collided, simulation.result.records
+
+def main():
+    collisions, results = [], []
+
+    for i in range(NUM_SIMULATIONS):
+        collided, simulation_result = exec_simulation()
+        collisions.append(collided)
+        results.append(simulation_result)
+
+    print(collisions)
+    for result in results:
+        print(result["distance"])
+    
 main()
 
 # DONE:
@@ -63,6 +56,5 @@ main()
 # Achtergrond informatie automata learning/monitor learning (hoe werkt dit/wat voor vormen zijn er?)
 # Trace printen: dit om te kunnen exporteren (misschien al met label?)
 # basic simulation
-
 
 # CARLA?
