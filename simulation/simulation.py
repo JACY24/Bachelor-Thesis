@@ -39,12 +39,11 @@ def calc_distance(a, b):
     return shapely.distance(poly_a, poly_b)
 
 def main():
-    collisions, results, distances = [], [], []
+    collisions, distances = [], []
 
     for i in range(NUM_SIMULATIONS):
         collided, simulation_result = exec_simulation()
         collisions.append(collided)
-        results.append(simulation_result)
 
         dist = []
         for i in range(len(simulation_result["parkedCorners"])):
