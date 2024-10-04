@@ -18,6 +18,6 @@ record round(ego.heading, 4) as drivingCarHeading
 record ego.intersects(parkedCar) as intersecting
 record ego.corners as drivingCorners
 record parkedCar.corners as parkedCorners
-record ego.speed as speed
+record round(ego.speed, 4) as speed
 
 terminate after 3 seconds
