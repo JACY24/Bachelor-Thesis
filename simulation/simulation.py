@@ -3,6 +3,8 @@ import scenic
 from scenic.simulators.newtonian import NewtonianSimulator
 from scenic.domains.driving.roads import Network
 import shapely as shapely
+import pandas as pd
+import numpy as np
 
 NUM_SIMULATIONS = 3
 CAR_WIDTH = 2
@@ -12,7 +14,7 @@ SCENARIO = scenic.scenarioFromFile('simulation/test.scenic',
                                     mode2D=True)
 
 def exec_simulation(network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')):
-    simulator = NewtonianSimulator(network, render=True)
+    simulator = NewtonianSimulator(network, render=False)
 
     # Execute NUM_SIMULATIONS simulations and evaluate them
     scene, _ = SCENARIO.generate()
@@ -36,25 +38,30 @@ def calc_distance(a, b):
     poly_a = shapely.Polygon(a[0:3])
     poly_b = shapely.Polygon(b[0:3])
 
-    return shapely.distance(poly_a, poly_b)
+    return round(shapely.distance(poly_a, poly_b), 4)
+
+def format_trace(dist, speed, steps):
+    return pd.DataFrame({
+        'Distance': dist,
+        'Speed': speed
+    })
 
 def main():
-    collisions, distances = [], []
+    collisions, distances, speeds = np.array([]), np.array([]), np.array([])
 
-    for i in range(NUM_SIMULATIONS):
+    for _ in range(NUM_SIMULATIONS):
         collided, simulation_result = exec_simulation()
-        collisions.append(collided)
+        np.append(collisions, collided)
 
-        dist = []
-        for i in range(len(simulation_result["parkedCorners"])):
-            dist.append(calc_distance(simulation_result["parkedCorners"][i][1], simulation_result["drivingCorners"][i][1]))
-            
-        distances.append(dist)
+        dist = [calc_distance(simulation_result["parkedCorners"][i][1], simulation_result["drivingCorners"][i][1]) for i in range(len(simulation_result["parkedCorners"]))]
+        speed = [x[1] for x in simulation_result["speed"]]
+        
+        trace = format_trace(dist, speed, len(dist))
 
-    for i in range(len(distances)):
-        print(f"#{i}:\t{collisions[i]}:")
-        for j in range(len(distances[i])):
-            print(f"{j}:\t{distances[i][j]}")
+        np.append(distances, dist)
+        np.append(speeds, speed)
+
+    print(trace)
 
 main()
 
