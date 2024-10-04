@@ -4,21 +4,20 @@ param time_step = 1.0/10
 
 model scenic.simulators.newtonian.driving_model
 
-ego = new Car
+select_road = Uniform(*network.roads)
+select_lanegroup = Uniform(*select_road.laneGroups)
 
-rightCurb = ego.laneGroup.curb
-spot = new OrientedPoint on visible rightCurb
+rightCurb = select_lanegroup.curb
+spot = new OrientedPoint on rightCurb
 
-parkedCar = new Car left of spot by 0.5
-drivingCar = new Car behind parkedCar by 3, 
-                    with behavior FollowLaneBehavior(laneToFollow=ego.laneGroup.lanes[len(ego.laneGroup.lanes)-1])
+ego = new Car left of spot by 0.5,
+                    with behavior FollowLaneBehavior(laneToFollow=select_lanegroup.lanes[0])
+parkedCar = new Car ahead of ego by 3
 
 record initial round(parkedCar.heading, 4) as parkedCarHeading
-record round(drivingCar.heading, 4) as drivingCarHeading
-record drivingCar.distanceTo(parkedCar) as distance
-record drivingCar.intersects(parkedCar) as intersecting
-
-# require always parkedCar not in intersection
-require always ((distance to parkedCar) > 8)
+record round(ego.heading, 4) as drivingCarHeading
+record ego.intersects(parkedCar) as intersecting
+record ego.corners as drivingCorners
+record parkedCar.corners as parkedCorners
 
 terminate after 3 seconds
