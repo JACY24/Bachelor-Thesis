@@ -55,7 +55,7 @@ def main():
         print(f"#{i}:\t{collisions[i]}:")
         for j in range(len(distances[i])):
             print(f"{j}:\t{distances[i][j]}")
-    
+
 main()
 
 # DONE:
