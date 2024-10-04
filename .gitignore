@@ -1,6 +1,8 @@
 # ignore local scenic install
 Scenic/
 
+test.txt
+
 
 # ignore . files
 .*
