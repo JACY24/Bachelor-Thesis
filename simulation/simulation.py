@@ -40,8 +40,8 @@ def format_trace(result: dict) -> pd.DataFrame:
     speed = [x[1] for x in result["speed"]]
     
     return pd.DataFrame({
-        'Distance': dist,
-        'Speed': speed
+        'distance': dist,
+        'speed': speed
     })
 
 def main():
