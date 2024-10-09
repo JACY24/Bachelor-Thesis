@@ -4,6 +4,7 @@ from scenic.simulators.newtonian import NewtonianSimulator
 from scenic.domains.driving.roads import Network
 import shapely as shapely
 import pandas as pd
+import monitor
 
 NUM_SIMULATIONS = 3
 CAR_WIDTH = 2
@@ -44,12 +45,19 @@ def format_trace(result: dict) -> pd.DataFrame:
     })
 
 def main():
-    for _ in range(NUM_SIMULATIONS):
-        simulation_result = exec_simulation()
-        if simulation_result is not None:
-            trace = format_trace(simulation_result)
+    # for _ in range(NUM_SIMULATIONS):
+    #     simulation_result = exec_simulation()
+    #     if simulation_result is not None:
+    #         trace = format_trace(simulation_result)
 
-    print(trace)
+    # print(trace)
+
+    simulation_result = exec_simulation()
+    if simulation_result is not None:
+        trace = format_trace(simulation_result)
+
+    print(monitor.monitor(trace))
+
 main()
 
 # DONE:
