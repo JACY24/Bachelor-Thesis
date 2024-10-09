@@ -56,7 +56,9 @@ def main():
     if simulation_result is not None:
         trace = format_trace(simulation_result)
 
+    print(trace)
     print(monitor.monitor(trace))
+
 
 main()
 
