@@ -4,6 +4,10 @@ param time_step = 1.0/10
 
 model scenic.simulators.newtonian.driving_model
 
+param weather = Uniform('ClearNoon', 'CloudyNoon', 
+                        'WetNoon', 'MidRainyNoon', 
+                        'ClearSunSet')
+
 select_road = Uniform(*network.roads)
 select_lanegroup = Uniform(*select_road.laneGroups)
 
