@@ -1,8 +1,11 @@
 # ignore local scenic install
 Scenic/
 
+# ignore personal scrappaper
 test.txt
 
+# ignore pycache
+__pycache__ 
 
 # ignore . files
 .*
