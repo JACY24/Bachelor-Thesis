@@ -15,24 +15,26 @@ def monitor(trace: pd.DataFrame) -> bool:
             False otherwise
     """
 
-    acceleration = 0
-    speed = 0
-    distance = 0
+    a = 0
+    v = 0
+    d = 0
 
     for index, row in trace.iterrows():
         if index == 0:
-            speed = row["speed"]
-            distance = row["distance"]
+            v = row["speed"] / 10
+            d = row["distance"]
             continue
         
-        acceleration = row["speed"] - speed
+        a = row["speed"] / 10 - v
 
-        speed = row["speed"]
-        distance = row["distance"]
+        v = row["speed"] / 10
+        d = row["distance"]
+        # print(f'timestep {index}, distance: {d}, speed: {v}, acceleration: {a}')
 
-        if distance - speed - acceleration < 0.2:
-            print(f'timestep {index}, distance: {distance}, speed: {speed}, acceleration: {acceleration}')
+        d_travelled = v * 2 + 0.5*a*2*2
+        print(trace)
+        if d - d_travelled < 0.15:
+            print(f'timestep {index}, distance: {d}, speed: {v}, acceleration: {a}')
             return False
         
-
     return True

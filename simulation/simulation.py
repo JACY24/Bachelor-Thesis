@@ -44,20 +44,22 @@ def format_trace(result: dict) -> pd.DataFrame:
         'speed': speed
     })
 
+def interscting(intersecting_list):
+    for (_, x) in intersecting_list:
+            if x:
+                return x
+            
+    return False
+
 def main():
-    # for _ in range(NUM_SIMULATIONS):
-    #     simulation_result = exec_simulation()
-    #     if simulation_result is not None:
-    #         trace = format_trace(simulation_result)
+    for _ in range(NUM_SIMULATIONS):
+        simulation_result = exec_simulation()
+        if simulation_result is not None:
+            trace = format_trace(simulation_result)
 
-    # print(trace)
-
-    simulation_result = exec_simulation()
-    if simulation_result is not None:
-        trace = format_trace(simulation_result)
-
-    print(trace)
-    print(monitor.monitor(trace))
+        f_m = monitor.monitor(trace)
+        sim_intersects = interscting(simulation_result['intersecting'])
+                  
 
 
 main()
@@ -70,6 +72,9 @@ main()
     
 # hoe goed is de monitor: remmen na 0.3s bij piepje: botsing of niet?
 # zelf monitor schrijven: basic informatie over traces (python)
+# delta d -> relatieve snelheid
+# Scikit -> decision tree
+# twee afstandspunten toevoegen
 # Achtergrond informatie automata learning/monitor learning (hoe werkt dit/wat voor vormen zijn er?)
 # Trace printen: dit om te kunnen exporteren (misschien al met label?)
 # basic simulation
