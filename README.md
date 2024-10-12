@@ -5,6 +5,11 @@ A repo contianing my bachelor thesis
 
 First download Scenic locally according to [the guide on the website](https://scenic-lang.readthedocs.io/en/latest/quickstart.html).
 
+Also make sure pandas is installed:
+```bash
+pip install pandas
+```
+
 ## Convenient tricks
 - To start the virtual environment:
 
