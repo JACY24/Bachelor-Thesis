@@ -76,8 +76,6 @@ def main():
         # f_m = monitor.monitor(trace)
         # sim_intersects = intersecting(simulation_result['intersecting'])
 
-
-
 if __name__ == '__main__':
     main()
 
