@@ -4,9 +4,13 @@ from scenic.simulators.newtonian import NewtonianSimulator
 from scenic.domains.driving.roads import Network
 import shapely as shapely
 import pandas as pd
-import monitor
+import numpy as np
+import matplotlib.pyplot as plt
+import decision_tree as dTree
+from sklearn.tree import plot_tree
 
-NUM_SIMULATIONS = 3
+
+NUM_SIMULATIONS = 10000
 CAR_WIDTH = 2
 CAR_LENGTH = 4.5
 SCENARIO = scenic.scenarioFromFile('simulation/test.scenic',
@@ -29,40 +33,53 @@ def exec_simulation(network: Network = Network.fromFile('Scenic/assets/maps/CARL
     simulator.destroy()
     return result
 
-def calc_distance(a: tuple[scenic.core.vectors.Vector], b: tuple[scenic.core.vectors.Vector]) -> float:
+def calc_distance(a: tuple[scenic.core.vectors.Vector], b: scenic.core.vectors.Vector) -> float:
     poly_a = shapely.Polygon(a[0:3])
-    poly_b = shapely.Polygon(b[0:3])
+    point_b = shapely.Point(b)
 
-    return round(shapely.distance(poly_a, poly_b), 4)
+    return round(shapely.distance(poly_a, point_b), 4)
 
 def format_trace(result: dict) -> pd.DataFrame:
-    dist = [calc_distance(result["parkedCorners"][i][1], result["drivingCorners"][i][1]) for i in range(len(result["parkedCorners"]))]
+    dist_fr = [calc_distance(result["parkedCorners"][i][1], result["drivingCorners"][i][1][0]) for i in range(len(result["drivingCorners"]))]
+    dist_fl = [calc_distance(result["parkedCorners"][i][1], result["drivingCorners"][i][1][1]) for i in range(len(result["drivingCorners"]))]
     speed = [x[1] for x in result["speed"]]
     
     return pd.DataFrame({
-        'distance': dist,
+        'dist_fl': dist_fl,
+        'dist_fr': dist_fr,
         'speed': speed
     })
 
-def interscting(intersecting_list):
+def intersecting(intersecting_list):
     for (_, x) in intersecting_list:
             if x:
-                return x
+                return True
             
     return False
 
 def main():
+    traces = []
+
     for _ in range(NUM_SIMULATIONS):
         simulation_result = exec_simulation()
         if simulation_result is not None:
             trace = format_trace(simulation_result)
+            traces.append(trace)
 
-        f_m = monitor.monitor(trace)
-        sim_intersects = interscting(simulation_result['intersecting'])
-                  
+    clf = dTree.train_classifier(traces, 5, 3)
+
+    plt.figure(figsize=(12, 8))  # Optional: Adjust the size of the plot
+    plot_tree(clf, filled=True)  # Use 'filled=True' for color in nodes
+    plt.show()  # This ensures the plot is displayed
+
+        # print(trace)
+        # f_m = monitor.monitor(trace)
+        # sim_intersects = intersecting(simulation_result['intersecting'])
 
 
-main()
+
+if __name__ == '__main__':
+    main()
 
 # DONE:
 # marges auto inbouwen
