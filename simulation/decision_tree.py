@@ -1,18 +1,20 @@
-import pandas as pd
+# import pandas as pd
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from typing import List
+from tqdm import tqdm
 
 
 def format_training_data(traces: List, labels: np.array, window_size: int = 5, prediction_horizon: int = 1):
+    """Format training data into sliding windows"""
     X_windows = []
     y_labels = []
 
-    for i, df in enumerate(traces):
+    for i, df in tqdm(enumerate(traces), desc='Processing traces'):
         n_steps = df.shape[0]
-        features = df[['dist_fl', 'dist_fr', 'speed']].values
+        features = df[['dist_fl', 'dist_fr', 'closing_rate_fl', 'closing_rate_fr', 'steering_angle']].values
         collision_labels = labels[i]
 
         # Create sliding windows of size 'window_size'
@@ -29,30 +31,28 @@ def format_training_data(traces: List, labels: np.array, window_size: int = 5, p
 
     return np.array(X_windows), np.array(y_labels)
 
-def generate_labels(trace: pd.DataFrame):
-    labels = []
+# def generate_labels(trace: pd.DataFrame):
+#     """Generate labels corresponding to the dataframes"""
+#     labels = []
 
-    for row in trace.itertuples():
-        if row.dist_fl < 0.05 or row.dist_fr < 0.05:
-            labels.append(1)
-        else:
-            labels.append(0)
+#     for row in trace.itertuples():
+#         if row.dist_fl < 0.05 or row.dist_fr < 0.05:
+#             labels.append(1)
+#         else:
+#             labels.append(0)
     
-    return np.array(labels)
+#     return np.array(labels)
 
-def train_classifier(traces: List, windows_size: int = 5, prediction_horizon: int = 1):
-    labels = []
+def train_classifier(traces: List, labels: List, windows_size: int = 5, prediction_horizon: int = 1):
+    """Train a decision tree classifier"""
     
-    for trace in traces:
-        labels.append(generate_labels(trace))
-
-    X, y = format_training_data(traces, np.array(labels), windows_size, prediction_horizon)
+    X, y = format_training_data(traces, np.array(labels),  windows_size, prediction_horizon)
 
     # Split into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=21)
 
     # Train a decision tree classifier
-    clf = DecisionTreeClassifier(random_state=21)
+    clf = DecisionTreeClassifier(max_depth=4, min_samples_split=10, min_samples_leaf=5, random_state=21)
     clf.fit(X_train, y_train)
 
     y_pred = clf.predict(X_test)
