@@ -1,5 +1,3 @@
-
-
 param map = localPath('../Scenic/assets/maps/CARLA/Town05.xodr')
 param carla_map = 'Town05'
 param time_step = 1.0/10
