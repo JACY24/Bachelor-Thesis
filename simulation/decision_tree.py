@@ -12,9 +12,9 @@ def format_training_data(traces: List, labels: np.array, window_size: int = 5, p
     X_windows = []
     y_labels = []
 
-    for i, df in tqdm(enumerate(traces), desc='Processing traces'):
-        n_steps = df.shape[0]
-        features = df[['dist_fl', 'dist_fr', 'closing_rate_fl', 'closing_rate_fr', 'steering_angle']].values
+    for i, trace in tqdm(enumerate(traces), desc='Processing traces', unit='traces'):
+        n_steps = trace.shape[0]
+        features = trace[['dist_fl', 'dist_fr', 'closing_rate_fl', 'closing_rate_fr', 'steering_angle']].to_numpy()
         collision_labels = labels[i]
 
         # Create sliding windows of size 'window_size'
@@ -31,18 +31,6 @@ def format_training_data(traces: List, labels: np.array, window_size: int = 5, p
 
     return np.array(X_windows), np.array(y_labels)
 
-# def generate_labels(trace: pd.DataFrame):
-#     """Generate labels corresponding to the dataframes"""
-#     labels = []
-
-#     for row in trace.itertuples():
-#         if row.dist_fl < 0.05 or row.dist_fr < 0.05:
-#             labels.append(1)
-#         else:
-#             labels.append(0)
-    
-#     return np.array(labels)
-
 def train_classifier(traces: List, labels: List, windows_size: int = 5, prediction_horizon: int = 1):
     """Train a decision tree classifier"""
     
@@ -52,7 +40,7 @@ def train_classifier(traces: List, labels: List, windows_size: int = 5, predicti
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=21)
 
     # Train a decision tree classifier
-    clf = DecisionTreeClassifier(max_depth=4, min_samples_split=10, min_samples_leaf=5, random_state=21)
+    clf = DecisionTreeClassifier(class_weight='balanced', max_depth=4, min_samples_split=10, min_samples_leaf=5, random_state=21)
     clf.fit(X_train, y_train)
 
     y_pred = clf.predict(X_test)
