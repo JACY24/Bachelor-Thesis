@@ -2,7 +2,7 @@ param map = localPath('../Scenic/assets/maps/CARLA/Town05.xodr')
 param carla_map = 'Town05'
 param time_step = 1.0/10
 
-import simulation
+import tester
 
 model scenic.simulators.newtonian.driving_model
 
@@ -11,10 +11,15 @@ param weather = Uniform('ClearNoon', 'CloudyNoon',
                         'WetNoon', 'MidRainyNoon', 
                         'ClearSunSet')
 
+monitor = tester.Monitor()
+
 behavior FollowLaneWithMonitor(laneToFollow=None):
     try:
         do FollowLaneBehavior(laneToFollow=laneToFollow)
-    interrupt when parkedCar.distanceTo(ego.corners[0]) < 0.05:
+    interrupt when monitor.check_for_alarm(round(parkedCar.distanceTo(ego.corners[1]), 4),
+                                            round(parkedCar.distanceTo(ego.corners[0]), 4),
+                                            round(ego.steer, 4)) 
+                                            and simulation().currentTime > 5:
         print('breakinggggg')
         take SetBrakeAction(1)
 
