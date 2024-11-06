@@ -11,6 +11,7 @@ from sklearn.tree import plot_tree
 from tqdm import tqdm
 from typing import List
 from sklearn.utils import shuffle
+import tester
 
 NUM_SIMULATIONS = 100
 CAR_WIDTH = 2
@@ -24,7 +25,7 @@ SCENARIO_LEFTSIDE = scenic.scenarioFromFile('simulation/parkedLeft.scenic',
 
 def exec_simulation(scenario, network: Network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')) -> dict | None:
     """Executes one run of a simulation"""
-    simulator = NewtonianSimulator(network, render=False)
+    simulator = NewtonianSimulator(network, render=True)
 
     # Execute NUM_SIMULATIONS simulations and evaluate them
     scene, _ = scenario.generate()
@@ -70,8 +71,8 @@ def intersection_during_simulation(intersections: List) -> bool:
 
 def format_trace(result: dict) -> pd.DataFrame:
     """Returns a Pandas DataFrame representing a trace of the system"""
-    dist_fr = [distance_car_to_point(result["parkedCorners"][i][1], result["drivingCorners"][i][1][0]) for i in range(len(result["drivingCorners"]))]
     dist_fl = [distance_car_to_point(result["parkedCorners"][i][1], result["drivingCorners"][i][1][1]) for i in range(len(result["drivingCorners"]))]
+    dist_fr = [distance_car_to_point(result["parkedCorners"][i][1], result["drivingCorners"][i][1][0]) for i in range(len(result["drivingCorners"]))]
     closing_rate_fr = calc_closing_rate(dist_fr)
     closing_rate_fl = calc_closing_rate(dist_fl)
     # speed = [x[1] for x in result["speed"]]
@@ -116,7 +117,7 @@ def main():
 
     traces, labels = shuffle(traces, labels, random_state=69)
 
-    # learn a decisiont ree
+    # learn a decision tree
     clf = dTree.train_classifier(traces, labels, 5, 5)
 
     feature_names = []
