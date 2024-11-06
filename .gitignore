@@ -10,5 +10,6 @@ __pycache__
 # ignore . files
 .*
 !.gitnore
+*.pkl
 
 /old/
