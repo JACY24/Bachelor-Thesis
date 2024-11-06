@@ -12,8 +12,9 @@ from tqdm import tqdm
 from typing import List
 from sklearn.utils import shuffle
 import tester
+import pickle
 
-NUM_SIMULATIONS = 100
+NUM_SIMULATIONS = 10
 CAR_WIDTH = 2
 CAR_LENGTH = 4.5
 SCENARIO_RIGHTSIDE = scenic.scenarioFromFile('simulation/parkedRight.scenic',
@@ -25,7 +26,7 @@ SCENARIO_LEFTSIDE = scenic.scenarioFromFile('simulation/parkedLeft.scenic',
 
 def exec_simulation(scenario, network: Network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')) -> dict | None:
     """Executes one run of a simulation"""
-    simulator = NewtonianSimulator(network, render=True)
+    simulator = NewtonianSimulator(network, render=False)
 
     # Execute NUM_SIMULATIONS simulations and evaluate them
     scene, _ = scenario.generate()
@@ -91,6 +92,12 @@ def generate_labels(interection_result):
     """Returns a list of labels for the generation timesteps""" 
     return [1 if i else 0 for t, i in interection_result]
 
+# def testing(dtree: tester.Predictor):
+#     testing_scenario = scenic.scenarioFromFile('simulation/tester.scenic',
+#                                     params={'dtree': dtree},
+#                                     model='scenic.simulators.newtonian.driving_model',
+#                                     mode2D=True)
+
 def main():
     traces = []
     labels = []
@@ -119,15 +126,19 @@ def main():
 
     # learn a decision tree
     clf = dTree.train_classifier(traces, labels, 5, 5)
+    
+    with open("test.pkl", 'wb') as f:
+        pickle.dump(clf, f, protocol=5)
+        f.close()
 
-    feature_names = []
-    for i in range(5):  # Assuming window size of 5
-        feature_names.extend([f'dist_fl_{i}', f'dist_fr_{i}', f'closing_rate_fl_{i}', f'closing_rate_fr_{i}', f'steering_angle_{i}'])
+    # feature_names = []
+    # for i in range(5):  # Assuming window size of 5
+    #     feature_names.extend([f'dist_fl_{i}', f'dist_fr_{i}', f'closing_rate_fl_{i}', f'closing_rate_fr_{i}', f'steering_angle_{i}'])
 
     # plot the learned decision tree
-    plt.figure(figsize=(12, 8))
-    plot_tree(clf, feature_names=feature_names, filled=True)
-    plt.show()
+    # plt.figure(figsize=(12, 8))
+    # plot_tree(clf, feature_names=feature_names, filled=True)
+    # plt.show()
   
 if __name__ == '__main__':
     main()
