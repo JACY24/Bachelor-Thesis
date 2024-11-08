@@ -1,8 +1,5 @@
-import scenic
-from sklearn.tree import DecisionTreeClassifier
 from typing import List
 import pickle
-
 
 class Monitor():
     def __init__(self, window=[0]*25, dtree=None):

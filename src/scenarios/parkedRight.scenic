@@ -1,4 +1,4 @@
-param map = localPath('../Scenic/assets/maps/CARLA/Town05.xodr')
+param map = localPath('../../Scenic/assets/maps/CARLA/Town05.xodr')
 param carla_map = 'Town05'
 param time_step = 1.0/10
 
@@ -13,10 +13,11 @@ param weather = Uniform('ClearNoon', 'CloudyNoon',
 select_road = Uniform(*network.roads)
 select_lanegroup = Uniform(*select_road.laneGroups)
 
-start_spot = new OrientedPoint on select_lanegroup.lanes[-1].leftEdge
+rightCurb = select_lanegroup.curb
+spot = new OrientedPoint on rightCurb
 
-ego = new Car left of start_spot by 0.5,
-                    with behavior FollowLaneBehavior(laneToFollow=select_lanegroup.lanes[-1])
+ego = new Car left of spot by 0.5,
+                    with behavior FollowLaneBehavior(laneToFollow=select_lanegroup.lanes[0])
 parkedCar = new Car ahead of ego by Range(3, 6)
 
 record round(ego.heading, 4) as drivingCarHeading
