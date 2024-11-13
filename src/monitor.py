@@ -4,7 +4,7 @@ import pickle
 class Monitor():
     def __init__(self, window=[0]*25, dtree=None):
         if dtree == None:
-            with open('test.pkl', 'rb') as f:
+            with open('tree.pkl', 'rb') as f:
                 self.dtree = pickle.load(f)
                 f.close()
         else:

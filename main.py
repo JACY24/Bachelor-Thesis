@@ -8,19 +8,22 @@ import matplotlib.pyplot as plt
 import scenic
 import pickle
 
-NUM_SIMULATIONS = 1000
+NUM_SIMULATIONS = 100
+NUM_OF_ITERATIONS = 5
 SCENARIO_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/parkedLeft.scenic',
                                     model='scenic.simulators.newtonian.driving_model',
                                     mode2D=True)
 SCENARIO_RIGHTSIDE = scenic.scenarioFromFile('src/scenarios/parkedRight.scenic',
                                     model='scenic.simulators.newtonian.driving_model',
                                     mode2D=True)
-SCENARIO_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/testerLeft.scenic',
-                                    model='scenic.simulators.newtonian.driving_model',
-                                    mode2D=True)                                 
-SCENARIO_RIGHTSIDE = scenic.scenarioFromFile('src/scenarios/testerRight.scenic',
+FALSE_NEGATIVE_SCENARIO = scenic.scenarioFromFile('src/scenarios/falseNegativeLeft.scenic',
                                     model='scenic.simulators.newtonian.driving_model',
                                     mode2D=True)
+
+
+def training_loop():
+    
+    pass
 
 def main():
 
@@ -46,15 +49,23 @@ def main():
     plot_tree(clf, feature_names=feature_names, filled=True)
     plt.show()
 
-    with open("test.pkl", 'wb') as f:
+    with open("tree.pkl", 'wb') as f:
         pickle.dump(clf, f, protocol=5)
         f.close()
+
+    SCENARIO_MONITOR_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/testerLeft.scenic',
+                                    model='scenic.simulators.newtonian.driving_model',
+                                    mode2D=True)                                 
+    SCENARIO_MONITOR_RIGHTSIDE = scenic.scenarioFromFile('src/scenarios/testerRight.scenic',
+                                    model='scenic.simulators.newtonian.driving_model',
+                                    mode2D=True)
         
-    traces_left, labels_left, intersections_left = sim.training_data_from_scenario(SCENARIO_LEFTSIDE, NUM_SIMULATIONS)
-    traces_right, labels_right, intersections_right = sim.training_data_from_scenario(SCENARIO_RIGHTSIDE, NUM_SIMULATIONS)
-    traces = traces_left + traces_right
-    labels = labels_left + labels_right
-    intersections_testing = intersections_left + intersections_right
+    # Run scenarios but with a monitor this time
+    traces_monitor_left, labels_monitor_left, intersections_monitor_left = sim.training_data_from_scenario(SCENARIO_MONITOR_LEFTSIDE, NUM_SIMULATIONS)
+    traces_monitor_right, labels_monitor_right, intersections_monitor_right = sim.training_data_from_scenario(SCENARIO_MONITOR_RIGHTSIDE, NUM_SIMULATIONS)
+    traces = traces_monitor_left + traces_monitor_right
+    labels = labels_monitor_left + labels_monitor_right
+    intersections_testing = intersections_monitor_left + intersections_monitor_right
 
     collisions_without_monitor = intersections_training.count(True) / (NUM_SIMULATIONS*2)
     collisions_with_monitor = intersections_testing.count(True) / (NUM_SIMULATIONS*2)

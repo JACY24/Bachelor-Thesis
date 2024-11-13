@@ -40,4 +40,9 @@ record parkedCar.corners as parkedCorners
 record round(ego.speed, 4) as speed
 record round(ego.steer, 4) as steer
 
+require eventually ego.intersects(parkedCar)
+require always not monitor.check_for_alarm(round(parkedCar.distanceTo(ego.corners[1]), 4),
+                                            round(parkedCar.distanceTo(ego.corners[0]), 4),
+                                            round(ego.steer, 4)) and simulation().currentTime > 5:
+
 terminate after 4 seconds
