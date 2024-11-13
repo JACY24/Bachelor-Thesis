@@ -9,7 +9,6 @@ param weather = Uniform('ClearNoon', 'CloudyNoon',
                         'WetNoon', 'MidRainyNoon', 
                         'ClearSunSet')
 
-# OLD SCENARIO:
 select_road = Uniform(*network.roads)
 select_lanegroup = Uniform(*select_road.laneGroups)
 
