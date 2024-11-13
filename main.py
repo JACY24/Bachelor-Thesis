@@ -6,47 +6,35 @@ from sklearn.tree import plot_tree
 import matplotlib.pyplot as plt
 
 import scenic
-from tqdm import tqdm
 import pickle
 
-
-NUM_SIMULATIONS = 10
+NUM_SIMULATIONS = 1000
+SCENARIO_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/parkedLeft.scenic',
+                                    model='scenic.simulators.newtonian.driving_model',
+                                    mode2D=True)
 SCENARIO_RIGHTSIDE = scenic.scenarioFromFile('src/scenarios/parkedRight.scenic',
                                     model='scenic.simulators.newtonian.driving_model',
                                     mode2D=True)
-SCENARIO_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/parkedLeft.scenic',
+SCENARIO_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/testerLeft.scenic',
+                                    model='scenic.simulators.newtonian.driving_model',
+                                    mode2D=True)                                 
+SCENARIO_RIGHTSIDE = scenic.scenarioFromFile('src/scenarios/testerRight.scenic',
                                     model='scenic.simulators.newtonian.driving_model',
                                     mode2D=True)
 
 def main():
-    print('test')
-    traces = []
-    labels = []
 
-    # Run NUM_SIMULATIONS simulations of cars parked on the right side
-    for _ in tqdm(range(NUM_SIMULATIONS), desc='Running right parked simulations', unit='sim'):
-        simulation_result = sim.exec_simulation(SCENARIO_RIGHTSIDE)
-        if simulation_result is not None:
-            # When a simulation is succesful, we format the trace and add it to our list of traces
-            formatted_trace = sim.format_trace(simulation_result)
-            generated_labels = (sim.generate_labels(simulation_result['intersecting']))
-            traces.append(formatted_trace)
-            labels.append(generated_labels)
-    
-    # Run NUM_SIMULATIONS simulations of cars parked on the left side
-    for _ in tqdm(range(NUM_SIMULATIONS), desc='Running left  parked simulations', unit='sim'):
-        simulation_result = sim.exec_simulation(SCENARIO_LEFTSIDE)
-        if simulation_result is not None:
-            # When a simulation is succesful, we format the trace and add it to our list of traces
-            formatted_trace = sim.format_trace(simulation_result)
-            generated_labels = (sim.generate_labels(simulation_result['intersecting']))
-            traces.append(formatted_trace)
-            labels.append(generated_labels)
+    # Run NUM_SIMULATIONS simulations of both scenarios
+    traces_left, labels_left, intersections_left = sim.training_data_from_scenario(SCENARIO_LEFTSIDE, NUM_SIMULATIONS)
+    traces_right, labels_right, intersections_right = sim.training_data_from_scenario(SCENARIO_RIGHTSIDE, NUM_SIMULATIONS)
+    traces = traces_left + traces_right
+    labels = labels_left + labels_right
+    intersections_training = intersections_left + intersections_right
 
     traces, labels = shuffle(traces, labels, random_state=69)
 
     # learn a decision tree
-    clf = dTree.train_classifier(traces, labels, 5, 5)
+    clf = dTree.train_classifier(traces, labels, 5, 6)
     
     # create a list of feature names to make the tree more human readable
     feature_names = []
@@ -61,7 +49,17 @@ def main():
     with open("test.pkl", 'wb') as f:
         pickle.dump(clf, f, protocol=5)
         f.close()
+        
+    traces_left, labels_left, intersections_left = sim.training_data_from_scenario(SCENARIO_LEFTSIDE, NUM_SIMULATIONS)
+    traces_right, labels_right, intersections_right = sim.training_data_from_scenario(SCENARIO_RIGHTSIDE, NUM_SIMULATIONS)
+    traces = traces_left + traces_right
+    labels = labels_left + labels_right
+    intersections_testing = intersections_left + intersections_right
 
+    collisions_without_monitor = intersections_training.count(True) / (NUM_SIMULATIONS*2)
+    collisions_with_monitor = intersections_testing.count(True) / (NUM_SIMULATIONS*2)
+
+    print(f'collisions without monitor:\t{collisions_without_monitor:.2%}\ncollisions with monitor:\t{collisions_with_monitor:.2%}')
   
 if __name__ == '__main__':
     main()
