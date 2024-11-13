@@ -5,6 +5,7 @@ from scenic.domains.driving.roads import Network
 import shapely as shapely
 import pandas as pd
 from typing import List
+from tqdm import tqdm
 
 def exec_simulation(scenario, network: Network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')) -> dict | None:
     """Executes one run of a simulation"""
@@ -72,3 +73,21 @@ def format_trace(result: dict) -> pd.DataFrame:
 def generate_labels(interection_result):
     """Returns a list of labels for the generation timesteps""" 
     return [1 if i else 0 for _, i in interection_result]
+
+def training_data_from_scenario(scenario, num_simulations: int = 1):
+    """Generates traces, labels and a list of truth values indicating if intersections occur during simulation runs"""
+    traces = []
+    labels = []
+    intersections = []
+
+    for _ in tqdm(range(num_simulations), desc='Running simulations', unit='sim'):
+        simulation_result = exec_simulation(scenario)
+        if simulation_result is not None:
+            # When a simulation is succesful, we format the trace and add it to our list of traces
+            formatted_trace = format_trace(simulation_result)
+            generated_labels = generate_labels(simulation_result['intersecting'])
+            traces.append(formatted_trace)
+            labels.append(generated_labels)
+            intersections.append(intersection_during_simulation(simulation_result['intersecting']))
+
+    return traces, labels, intersections
