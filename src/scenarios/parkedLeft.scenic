@@ -1,8 +1,16 @@
+# Set a seed so that scene sampling becomes deterministic
+import random
+import numpy
+
 param map = localPath('../../Scenic/assets/maps/CARLA/Town05.xodr')
 param carla_map = 'Town05'
 param time_step = 1.0/10
 
 model scenic.simulators.newtonian.driving_model
+
+if globalParameters['seed']:
+    random.seed(globalParameters['seed'])
+    numpy.random.seed(globalParameters['seed'])
 
 # Uniformly select a weather type
 param weather = Uniform('ClearNoon', 'CloudyNoon', 

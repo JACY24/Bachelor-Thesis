@@ -1,6 +1,14 @@
+# Set a seed so that scene sampling becomes deterministic
+import random
+import numpy
+
 param map = localPath('../../Scenic/assets/maps/CARLA/Town05.xodr')
 param carla_map = 'Town05'
 param time_step = 1.0/10
+
+if globalParameters['seed']:
+    random.seed(globalParameters['seed'])
+    numpy.random.seed(globalParameters['seed'])
 
 import src.monitor as monitor
 
