@@ -49,9 +49,9 @@ def training_loop(traces: List, labels: List, scenarios: List, min_accuracy: flo
 
         accuracy = new_accuracy
 
-        print(f'{count}\t{1-accuracy:.2%} collisions\t{accuracy_delta}')
+        print(f'{count}\t{1-accuracy:.2%} collisions\t{accuracy_delta:.4%}')
 
-        clf = dTree.train_classifier(traces=traces, labels=labels, windows_size=5, prediction_horizon=8)
+        clf = dTree.train_classifier(traces=traces, labels=labels, windows_size=5, prediction_horizon=7)
 
         with open("tree.pkl", 'wb') as f:
             pickle.dump(clf, f, protocol=5)
