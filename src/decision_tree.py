@@ -37,16 +37,11 @@ def train_classifier(traces: List, labels: List, windows_size: int = 5, predicti
     X, y = format_training_data(traces, np.array(labels),  windows_size, prediction_horizon)
 
     # Split into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=21)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=21)
 
     # Train a decision tree classifier
     clf = DecisionTreeClassifier(class_weight='balanced', max_depth=9, min_samples_split=20, min_samples_leaf=5, random_state=21)
     clf.fit(X_train, y_train)
-
-    y_pred = clf.predict(X_test)
-
-    accuracy = accuracy_score(y_test, y_pred)
-    print(f"Accuracy: {accuracy:.2f}")
 
     return clf
     
