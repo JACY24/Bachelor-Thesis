@@ -40,7 +40,7 @@ def train_classifier(traces: List, labels: List, windows_size: int = 5, predicti
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=21)
 
     # Train a decision tree classifier
-    clf = DecisionTreeClassifier(class_weight='balanced', max_depth=9, min_samples_split=20, min_samples_leaf=5, random_state=21)
+    clf = DecisionTreeClassifier(class_weight='balanced', min_samples_split=5, min_samples_leaf=5, random_state=21)
     clf.fit(X_train, y_train)
 
     return clf

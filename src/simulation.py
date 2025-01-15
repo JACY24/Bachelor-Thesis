@@ -7,9 +7,9 @@ import pandas as pd
 from typing import List
 from tqdm import tqdm
 
-def exec_simulation(scenario, network: Network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr')) -> dict | None:
+def exec_simulation(scenario, network: Network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr'), render: bool = False) -> dict | None:
     """Executes one run of a simulation"""
-    simulator = NewtonianSimulator(network, render=False)
+    simulator = NewtonianSimulator(network, render=render)
 
     # Execute NUM_SIMULATIONS simulations and evaluate them
     scene, _ = scenario.generate()
@@ -47,9 +47,9 @@ def calc_closing_rate(distances: List) -> List:
 
     return closing_rates
 
-def intersection_during_simulation(intersections: List) -> bool:
-    """Returns True if a collision happens during a simulation run and false otherwise"""
-    for _, x in intersections:
+def event_during_simulation(record: List) -> bool:
+    """gets a record of boolean values and returns true if there is at least one value 'true' during the simulation run"""
+    for _, x in record:
         if x:
             return True
     return False
@@ -74,20 +74,23 @@ def generate_labels(interection_result):
     """Returns a list of labels for the generation timesteps""" 
     return [1 if i else 0 for _, i in interection_result]
 
-def training_data_from_scenario(scenario, num_simulations: int = 1):
+def training_data_from_scenario(scenario, num_simulations: int = 1, render: bool = False):
     """Generates traces, labels and a list of truth values indicating if intersections occur during simulation runs"""
     traces = []
     labels = []
     intersections = []
+    alarms = []
 
     for _ in tqdm(range(num_simulations), desc='Running simulations', unit='sim'):
-        simulation_result = exec_simulation(scenario)
+        simulation_result = exec_simulation(scenario, render = render)
         if simulation_result is not None:
             # When a simulation is succesful, we format the trace and add it to our list of traces
             formatted_trace = format_trace(simulation_result)
             generated_labels = generate_labels(simulation_result['intersecting'])
             traces.append(formatted_trace)
             labels.append(generated_labels)
-            intersections.append(intersection_during_simulation(simulation_result['intersecting']))
+            intersections.append(event_during_simulation(simulation_result['intersecting']))
+            if 'alarm' in simulation_result.keys():
+                alarms.append(simulation_result['alarm'])
 
-    return traces, labels, intersections
+    return traces, labels, intersections, alarms

@@ -1,5 +1,6 @@
 import src.simulation as sim
 import src.decision_tree as dTree
+import src.monitor as mon
 
 from sklearn.utils import shuffle
 from sklearn.tree import plot_tree
@@ -9,9 +10,9 @@ from typing import List
 import scenic
 import pickle
 
-NUM_SIMULATIONS = 100
+NUM_SIMULATIONS = 10
 NUM_OF_ITERATIONS = 5
-SEED = 42
+SEED = 11
 SCENARIO_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/parkedLeft.scenic',
                                     params = {'seed': SEED},
                                     model='scenic.simulators.newtonian.driving_model',
@@ -20,20 +21,30 @@ SCENARIO_RIGHTSIDE = scenic.scenarioFromFile('src/scenarios/parkedRight.scenic',
                                     params = {'seed': SEED},                                             
                                     model='scenic.simulators.newtonian.driving_model',
                                     mode2D=True)
- 
-def training_loop(traces: List, labels: List, scenarios: List, min_accuracy: float = 0.95, delta:float = 0.0005, max_iterations = 100):
-    print("start training")
 
+def find_monitor_errors(alarms, intersections):
+    num_of_errors = 0
+    for i in range(len(alarms)):
+        if alarms[i] and intersections[i]:
+            num_of_errors += 1
+
+    return num_of_errors
+
+def training_loop(traces: List, labels: List, scenarios, monitor: mon.Monitor, min_accuracy: float = 0.95, delta:float = 0.0005, max_iterations = 10):
+    
     accuracy = 0
-    accuracy_delta = 1
     count = 0
 
-    while accuracy <= min_accuracy or count >= max_iterations-1:
+    while accuracy <= min_accuracy or count < max_iterations:
         intersections = []
+        num_of_errs = 0
+
+        num_of_alarms = 0
 
         for scenario in scenarios:
+            monitor.reset_window()
             # Run scenarios but with a monitor this time
-            scenario_traces, scenario_labels, scenario_intersections = sim.training_data_from_scenario(scenario, NUM_SIMULATIONS)
+            scenario_traces, scenario_labels, scenario_intersections, alarms = sim.training_data_from_scenario(scenario, NUM_SIMULATIONS, render=False)
 
             filtered_traces = [trace for trace, intersect in zip(scenario_traces, scenario_intersections) if intersect]
             filtered_labels = [label for label, intersect in zip(scenario_labels, scenario_intersections) if intersect]
@@ -41,32 +52,37 @@ def training_loop(traces: List, labels: List, scenarios: List, min_accuracy: flo
             traces = traces + filtered_traces
             labels = labels + filtered_labels
             intersections = intersections + scenario_intersections
+            num_of_errs += find_monitor_errors(alarms, scenario_intersections)
+            num_of_alarms += alarms.count(True)
 
         traces, labels = shuffle(traces, labels, random_state=69)
 
-        new_accuracy = intersections.count(False) / (NUM_SIMULATIONS * 2)
-        accuracy_delta = new_accuracy - accuracy
+        accuracy = intersections.count(False) / (NUM_SIMULATIONS * 2)
 
-        accuracy = new_accuracy
+        print(f'{count}: {1-accuracy:.2%} collisions, {num_of_errs} alarms raised that still collided, {num_of_alarms} alarms raised')
 
-        print(f'{count}\t{1-accuracy:.2%} collisions\t{accuracy_delta:.4%}')
+        dtree = dTree.train_classifier(traces=traces, labels=labels, windows_size=5, prediction_horizon=6)
+        monitor.reset(dtree)
 
-        clf = dTree.train_classifier(traces=traces, labels=labels, windows_size=5, prediction_horizon=7)
+        # plot the learned decision tree
+        # plt.figure(figsize=(12, 8))
+        # plot_tree(dtree, filled=True)
+        # plt.show()
 
         with open("tree.pkl", 'wb') as f:
-            pickle.dump(clf, f, protocol=5)
+            pickle.dump(dtree, f, protocol=5)
             f.close()
         
         count += 1
 
-    return clf
+    # return dtree
         
 
 def main():
 
     # Run NUM_SIMULATIONS simulations of both scenarios
-    traces_left, labels_left, intersections_left = sim.training_data_from_scenario(SCENARIO_LEFTSIDE, NUM_SIMULATIONS)
-    traces_right, labels_right, intersections_right = sim.training_data_from_scenario(SCENARIO_RIGHTSIDE, NUM_SIMULATIONS)
+    traces_left, labels_left, intersections_left, alarms_left = sim.training_data_from_scenario(SCENARIO_LEFTSIDE, NUM_SIMULATIONS, False)
+    traces_right, labels_right, intersections_right, alarms_right = sim.training_data_from_scenario(SCENARIO_RIGHTSIDE, NUM_SIMULATIONS, False)
     traces = traces_left + traces_right
     labels = labels_left + labels_right
     intersections = intersections_left + intersections_right
@@ -93,19 +109,22 @@ def main():
     with open("tree.pkl", 'wb') as f:
         pickle.dump(clf, f, protocol=5)
         f.close()
+    
+    monitor = mon.Monitor(dtree=clf)
 
     SCENARIO_MONITOR_LEFTSIDE = scenic.scenarioFromFile('src/scenarios/testerLeft.scenic',
-                                    params={'seed': SEED},
-                                    model='scenic.simulators.newtonian.driving_model',
-                                    mode2D=True)
+                                        params={'seed': SEED, 'monitor': monitor},
+                                        model='scenic.simulators.newtonian.driving_model',
+                                        mode2D=True)
     SCENARIO_MONITOR_RIGHTSIDE = scenic.scenarioFromFile('src/scenarios/testerRight.scenic',
-                                    params={'seed': SEED},
-                                    model='scenic.simulators.newtonian.driving_model',
-                                    mode2D=True)
+                                        params={'seed': SEED, 'monitor': monitor},
+                                        model='scenic.simulators.newtonian.driving_model',
+                                        mode2D=True)
 
     training_loop(traces=traces, 
-                  labels=labels, 
+                  labels=labels,
                   scenarios=[SCENARIO_MONITOR_LEFTSIDE, SCENARIO_MONITOR_RIGHTSIDE],
+                  monitor=monitor,
                   min_accuracy=0.98,
                   delta=0.0005)
     
@@ -122,3 +141,10 @@ if __name__ == '__main__':
 # wegrijden als parkeren ipv. followlane
 
 # CARLA?traces = []
+
+
+# check of randomness hetzelfde blijft bij monitor breaking monitor.
+# gaat ie niet opeens altijd remmen?
+# bijhouden hoe vaak die remt
+# scenic forum vraag stellen over alarm uit de simulatie halen
+# gaat ie op een gegeven moment 'obviously unsafe' cases als grensgeval zien?

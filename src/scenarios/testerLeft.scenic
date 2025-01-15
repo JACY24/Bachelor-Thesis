@@ -1,4 +1,3 @@
-# Set a seed so that scene sampling becomes deterministic
 import random
 import numpy
 
@@ -6,6 +5,7 @@ param map = localPath('../../Scenic/assets/maps/CARLA/Town05.xodr')
 param carla_map = 'Town05'
 param time_step = 1.0/10
 
+# Set a seed so that scene sampling becomes deterministic
 if globalParameters['seed']:
     random.seed(globalParameters['seed'])
     numpy.random.seed(globalParameters['seed'])
@@ -14,16 +14,14 @@ import src.monitor as monitor
 
 model scenic.simulators.newtonian.driving_model
 
-# Uniformly select a weather type
-param weather = Uniform('ClearNoon', 'CloudyNoon', 
-                        'WetNoon', 'MidRainyNoon', 
-                        'ClearSunSet')
+# Initialize the monitor
+monitor = globalParameters['monitor']
 
-monitor = monitor.Monitor()
-
+# Behavior for when the monitor raises an alarm
 behavior Brake():
     take SetBrakeAction(1)
 
+# Do followlane behavior until monitor raises an alarm
 behavior FollowLaneWithMonitor(laneToFollow=None):
     try:
         do FollowLaneBehavior(laneToFollow=laneToFollow)
@@ -32,15 +30,17 @@ behavior FollowLaneWithMonitor(laneToFollow=None):
                                             round(ego.steer, 4)) and simulation().currentTime > 5:
         do Brake()
 
+# Select starting position
 select_road = Uniform(*network.roads)
 select_lanegroup = Uniform(*select_road.laneGroups)
-
 start_spot = new OrientedPoint on select_lanegroup.lanes[-1].leftEdge
 
-ego = new Car left of start_spot by 0.5,
+# Create cars with the correct behaviors
+ego = new Car left of start_spot by 1,
                     with behavior FollowLaneWithMonitor(laneToFollow=select_lanegroup.lanes[-1])
 parkedCar = new Car ahead of ego by Range(3, 6)
 
+# Record observations of interest
 record round(ego.heading, 4) as drivingCarHeading
 record ego.intersects(parkedCar) as intersecting
 record ego.corners as drivingCorners
