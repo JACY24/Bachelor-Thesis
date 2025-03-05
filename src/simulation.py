@@ -1,5 +1,4 @@
 import scenic
-import multiprocessing
 
 from scenic.simulators.newtonian import NewtonianSimulator
 from scenic.domains.driving.roads import Network
