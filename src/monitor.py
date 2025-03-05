@@ -40,17 +40,17 @@ class Monitor():
             'closing_rate_fl': [self.window[i+2] for i in range(0,25,5)],
             'closing_rate_fr': [self.window[i+3] for i in range(0,25,5)],
             'steering_angle': [self.window[i+4] for i in range(0,25,5)],
+            # 'same_lane': [self.window[i+5] for i in range(0,25,5)]
         })
         print(f'{frame}')
 
     def check_for_alarm(self, dist_fl: float, dist_fr: float, steer: float) -> bool:
 
         current_state = [dist_fl, dist_fr, self.window[22] - dist_fl, self.window[23] - dist_fr, steer]
+        # current_state = [dist_fl, dist_fr, self.window[26] - dist_fl, self.window[27] - dist_fr, steer, same_lane]
 
         self.add_new_step(current_state)
 
-        # self.print_window()
-        # return True
         return self.predict()
     
     # nieuwe data relevanter maken? hier is de monitor al actief dus wellicht relevanter voor de classifier
