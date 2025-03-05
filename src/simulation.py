@@ -1,4 +1,5 @@
 import scenic
+import multiprocessing
 
 from scenic.simulators.newtonian import NewtonianSimulator
 from scenic.domains.driving.roads import Network
@@ -6,6 +7,7 @@ import shapely as shapely
 import pandas as pd
 from typing import List
 from tqdm import tqdm
+import random
 
 def exec_simulation(scenario, network: Network = Network.fromFile('Scenic/assets/maps/CARLA/Town05.xodr'), render: bool = False) -> dict | None:
     """Executes one run of a simulation"""
@@ -68,29 +70,44 @@ def format_trace(result: dict) -> pd.DataFrame:
         'closing_rate_fl': closing_rate_fl,
         'closing_rate_fr': closing_rate_fr,
         'steering_angle': steer,
+        # 'same_lane': [x[1] for x in result['same_lane']]
     })
 
 def generate_labels(interection_result):
     """Returns a list of labels for the generation timesteps""" 
     return [1 if i else 0 for _, i in interection_result]
 
-def training_data_from_scenario(scenario, num_simulations: int = 1, render: bool = False):
+def training_data_from_scenario(scenario_file, num_simulations: int = 1, seed: int = None, monitor = None, render: bool = False):
     """Generates traces, labels and a list of truth values indicating if intersections occur during simulation runs"""
+    if seed:
+        random.seed(seed)
+
     traces = []
     labels = []
     intersections = []
     alarms = []
 
-    for _ in tqdm(range(num_simulations), desc='Running simulations', unit='sim'):
+    # Run NUM_SIMULATIONS simulations of the provided scenario
+    scenario = scenic.scenarioFromFile(scenario_file,
+                                params = {'seed': random.randint(0, 2**32) if seed else None, 'monitor': monitor},
+                                model='scenic.simulators.newtonian.driving_model',
+                                mode2D=True)
+    
+    for i in tqdm(range(num_simulations), desc='Running simulations', unit='sim'):
+        
         simulation_result = exec_simulation(scenario, render = render)
+
         if simulation_result is not None:
             # When a simulation is succesful, we format the trace and add it to our list of traces
             formatted_trace = format_trace(simulation_result)
             generated_labels = generate_labels(simulation_result['intersecting'])
+            # if formatted_trace['same_lane'][0] != event_during_simulation(simulation_result['intersecting']):
+            #     print(f"{i}: NOT THE SAME!!!!")
             traces.append(formatted_trace)
             labels.append(generated_labels)
+    
             intersections.append(event_during_simulation(simulation_result['intersecting']))
             if 'alarm' in simulation_result.keys():
-                alarms.append(simulation_result['alarm'])
+                alarms.append(event_during_simulation(simulation_result['alarm']))
 
     return traces, labels, intersections, alarms
