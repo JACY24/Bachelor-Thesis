@@ -1,8 +1,10 @@
 # import pandas as pd
 import numpy as np
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import StratifiedKFold
+
 from typing import List
 from tqdm import tqdm
 
@@ -15,13 +17,13 @@ def format_training_data(traces: List, labels: np.array, window_size: int = 5, p
     for i, trace in tqdm(enumerate(traces), desc='Processing traces', unit='traces'):
         n_steps = trace.shape[0]
         features = trace[['dist_fl', 'dist_fr', 'closing_rate_fl', 'closing_rate_fr', 'steering_angle']].to_numpy()
+
         collision_labels = labels[i]
 
         # Create sliding windows of size 'window_size'
         for j in range(n_steps - window_size - prediction_horizon + 1):
             # Extract a window of time steps
             window = features[j:j + window_size].flatten()  # Flatten the window
-            
             # The target label is whether a collision occurs after the window, at 'prediction_horizon' time steps ahead
             future_collision = collision_labels[j + window_size + prediction_horizon - 1]
             
@@ -39,8 +41,16 @@ def train_classifier(traces: List, labels: List, windows_size: int = 5, predicti
     # Split into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=21)
 
+    # params = {'max_depth': np.arange(1, 10),
+    #             'min_samples_split': np.arange(2, 100),
+    #             'min_samples_leaf': np.arange(2, 100),}
+    # random_search = RandomizedSearchCV(DecisionTreeClassifier(), params, n_iter=20, cv=5, scoring='accuracy', random_state=42, n_jobs=-1)
+    # random_search.fit(X_train, y_train)
+
+    # print("Best parameters:", random_search.best_params_)
+
     # Train a decision tree classifier
-    clf = DecisionTreeClassifier(class_weight='balanced', min_samples_split=5, min_samples_leaf=5, random_state=21)
+    clf = DecisionTreeClassifier(min_samples_split=57, min_samples_leaf=9, max_depth=8, random_state=42)
     clf.fit(X_train, y_train)
 
     return clf
