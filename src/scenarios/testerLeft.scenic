@@ -16,9 +16,12 @@ model scenic.simulators.newtonian.driving_model
 
 # Initialize the monitor
 monitor = globalParameters['monitor']
+alarm = False
 
 # Behavior for when the monitor raises an alarm
 behavior Brake():
+    global alarm 
+    alarm = True
     take SetBrakeAction(1)
 
 # Do followlane behavior until monitor raises an alarm
@@ -45,7 +48,7 @@ record round(ego.heading, 4) as drivingCarHeading
 record ego.intersects(parkedCar) as intersecting
 record ego.corners as drivingCorners
 record parkedCar.corners as parkedCorners
-record round(ego.speed, 4) as speed
 record round(ego.steer, 4) as steer
+record alarm as alarm
 
-terminate after 4 seconds
+terminate after 6 seconds
