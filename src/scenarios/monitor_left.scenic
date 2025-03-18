@@ -14,14 +14,13 @@ import src.monitor as monitor
 
 model scenic.simulators.newtonian.driving_model
 
-alarm = False
-
 # Initialize the monitor
 monitor = globalParameters['monitor']
+alarm = False
 
 # Behavior for when the monitor raises an alarm
 behavior Brake():
-    global alarm
+    global alarm 
     alarm = True
     take SetBrakeAction(1)
 
@@ -31,18 +30,17 @@ behavior FollowLaneWithMonitor(laneToFollow=None):
         do FollowLaneBehavior(laneToFollow=laneToFollow)
     interrupt when monitor.check_for_alarm(round(parkedCar.distanceTo(ego.corners[1]), 4),
                                             round(parkedCar.distanceTo(ego.corners[0]), 4),
-                                            round(ego.steer, 4)) and simulation().currentTime > 5:
+                                            round(ego.steer, 4)):
         do Brake()
 
 # Select starting position
 select_road = Uniform(*network.roads)
 select_lanegroup = Uniform(*select_road.laneGroups)
-rightCurb = select_lanegroup.curb
-spot = new OrientedPoint on rightCurb
+start_spot = new OrientedPoint on select_lanegroup.lanes[-1].leftEdge
 
 # Create cars with the correct behaviors
-ego = new Car left of spot by 0.5,
-                    with behavior FollowLaneWithMonitor(laneToFollow=select_lanegroup.lanes[0])
+ego = new Car left of start_spot by 1,
+                    with behavior FollowLaneWithMonitor(laneToFollow=select_lanegroup.lanes[-1])
 parkedCar = new Car ahead of ego by Range(3, 6)
 
 # Record observations of interest
@@ -51,5 +49,6 @@ record ego.intersects(parkedCar) as intersecting
 record ego.corners as drivingCorners
 record parkedCar.corners as parkedCorners
 record round(ego.steer, 4) as steer
+record alarm as alarm
 
-terminate after 6 seconds
+terminate after 5 seconds

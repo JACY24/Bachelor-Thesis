@@ -20,7 +20,6 @@ alarm = False
 
 # Behavior for when the monitor raises an alarm
 behavior Brake():
-    print('TUUT')
     global alarm 
     alarm = True
     take SetBrakeAction(1)
@@ -34,7 +33,7 @@ behavior FollowLaneWithMonitor(laneToFollow=None):
     interrupt when monitor.check_for_alarm(round(parkedCar.distanceTo(ego.corners[1]), 4),
                                             round(parkedCar.distanceTo(ego.corners[0]), 4),
                                             round(ego.steer, 4),
-                                            select_ego_lane == select_npc_lane) and simulation().currentTime > 5:
+                                            int(select_ego_lane == select_npc_lane)):
         do Brake()
 
 # Select starting spot for the cars
@@ -43,11 +42,11 @@ select_lanegroup = Uniform(*select_road.laneGroups)
 select_ego_lane = Uniform(*select_lanegroup.lanes)
 
 # Create two cars with correct behavior
-ego = new Car contained in select_ego_lane,
+ego = new Car on select_ego_lane.centerline,
                     with behavior FollowLaneBehavior(laneToFollow=select_ego_lane)
 
 select_npc_lane = Uniform(*select_lanegroup.lanes)
-parkedCar = new Car contained in visible select_npc_lane#,
+parkedCar = new Car on visible select_npc_lane.centerline#,
                     #with behavior FollowLaneBehavior(laneToFollow=select_npc_lane)
 
 # Record the observations of interest
@@ -57,8 +56,8 @@ record ego.corners as drivingCorners
 record parkedCar.corners as parkedCorners
 record round(ego.steer, 4) as steer
 record alarm as alarm
-record select_ego_lane == select_npc_lane as same_lane
+record int(select_ego_lane == select_npc_lane) as same_lane
 
-require ego.distanceTo(parkedCar) < 20
+require (select_ego_lane == select_npc_lane) implies eventually ego.intersects(parkedCar)
 
-terminate after 6 seconds
+terminate after 5 seconds

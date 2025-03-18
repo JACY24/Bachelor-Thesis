@@ -31,4 +31,4 @@ record parkedCar.corners as parkedCorners
 record round(ego.speed, 4) as speed
 record round(ego.steer, 4) as steer
 
-terminate after 6 seconds
+terminate after 5 seconds

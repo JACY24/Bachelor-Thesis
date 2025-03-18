@@ -18,11 +18,11 @@ select_lanegroup = Uniform(*select_road.laneGroups)
 select_ego_lane = Uniform(*select_lanegroup.lanes)
 
 # Create two cars with correct behavior
-ego = new Car contained in select_ego_lane,
+ego = new Car on select_ego_lane.centerline,
                     with behavior FollowLaneBehavior(laneToFollow=select_ego_lane)
 
 select_npc_lane = Uniform(*select_lanegroup.lanes)
-parkedCar = new Car contained in visible select_npc_lane#,
+parkedCar = new Car on visible select_npc_lane.centerline#,
                     #with behavior FollowLaneBehavior(laneToFollow=select_npc_lane)
 
 # Record the observations of interest
@@ -32,8 +32,8 @@ record ego.corners as drivingCorners
 record parkedCar.corners as parkedCorners
 record round(ego.speed, 4) as speed
 record round(ego.steer, 4) as steer
-record select_ego_lane == select_npc_lane as same_lane 
+record int(select_ego_lane == select_npc_lane) as same_lane 
 
-require ego.distanceTo(parkedCar) < 20
+require (select_ego_lane == select_npc_lane) implies eventually ego.intersects(parkedCar)
 
-terminate after 6 seconds
+terminate after 5 seconds

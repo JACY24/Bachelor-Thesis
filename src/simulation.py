@@ -63,14 +63,24 @@ def format_trace(result: dict) -> pd.DataFrame:
     closing_rate_fl = calc_closing_rate(dist_fl)
     steer = [x[1] for x in result['steer']]
     
+    if 'same_lane' in result.keys():
+        return pd.DataFrame({
+            'dist_fl': dist_fl,
+            'dist_fr': dist_fr,
+            'closing_rate_fl': closing_rate_fl,
+            'closing_rate_fr': closing_rate_fr,
+            'steering_angle': steer,
+            'same_lane': [x[1] for x in result['same_lane']]
+        })
+    
     return pd.DataFrame({
-        'dist_fl': dist_fl,
-        'dist_fr': dist_fr,
-        'closing_rate_fl': closing_rate_fl,
-        'closing_rate_fr': closing_rate_fr,
-        'steering_angle': steer,
-        # 'same_lane': [x[1] for x in result['same_lane']]
-    })
+            'dist_fl': dist_fl,
+            'dist_fr': dist_fr,
+            'closing_rate_fl': closing_rate_fl,
+            'closing_rate_fr': closing_rate_fr,
+            'steering_angle': steer
+        })
+
 
 def generate_labels(interection_result):
     """Returns a list of labels for the generation timesteps""" 
@@ -100,8 +110,7 @@ def training_data_from_scenario(scenario_file, num_simulations: int = 1, seed: i
             # When a simulation is succesful, we format the trace and add it to our list of traces
             formatted_trace = format_trace(simulation_result)
             generated_labels = generate_labels(simulation_result['intersecting'])
-            # if formatted_trace['same_lane'][0] != event_during_simulation(simulation_result['intersecting']):
-            #     print(f"{i}: NOT THE SAME!!!!")
+            
             traces.append(formatted_trace)
             labels.append(generated_labels)
     
