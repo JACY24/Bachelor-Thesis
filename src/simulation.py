@@ -81,12 +81,23 @@ def format_trace(result: dict) -> pd.DataFrame:
             'steering_angle': steer
         })
 
-
 def generate_labels(interection_result):
     """Returns a list of labels for the generation timesteps""" 
     return [1 if i else 0 for _, i in interection_result]
 
-def training_data_from_scenario(scenario_file, num_simulations: int = 1, seed: int = None, monitor = None, render: bool = False):
+def late_alarm(alarms: List, violations: List, prediction_horizon: int):
+
+    target_index = len(alarms)
+    for i in range(len(alarms)):
+        if violations[i][1] == 1 and i < target_index:
+            return True
+        
+        if alarms[i][1] == 1:
+            target_index = i+prediction_horizon
+
+    return False
+
+def training_data_from_scenario(scenario_file, num_simulations: int = 1, seed: int = None, monitor = None, render: bool = False, prediction_horizon: int = 10):
     """Generates traces, labels and a list of truth values indicating if intersections occur during simulation runs"""
     if seed:
         random.seed(seed)
@@ -95,6 +106,7 @@ def training_data_from_scenario(scenario_file, num_simulations: int = 1, seed: i
     labels = []
     intersections = []
     alarms = []
+    late_alarms = []
 
     # Run NUM_SIMULATIONS simulations of the provided scenario
     scenario = scenic.scenarioFromFile(scenario_file,
@@ -113,9 +125,10 @@ def training_data_from_scenario(scenario_file, num_simulations: int = 1, seed: i
             
             traces.append(formatted_trace)
             labels.append(generated_labels)
-    
+
             intersections.append(event_during_simulation(simulation_result['intersecting']))
             if 'alarm' in simulation_result.keys():
                 alarms.append(event_during_simulation(simulation_result['alarm']))
+                late_alarms.append(late_alarm(simulation_result['alarm'], simulation_result['intersecting'], prediction_horizon))
 
-    return traces, labels, intersections, alarms
+    return traces, labels, intersections, alarms, late_alarms

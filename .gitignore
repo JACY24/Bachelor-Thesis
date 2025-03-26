@@ -1,6 +1,15 @@
 # ignore local scenic install
 Scenic/
 
+results/
+results_0/
+results_1/
+results_2/
+better_trees_1/
+better_trees_2/
+test/
+better_trees.py
+
 # ignore personal scrappaper
 test.txt
 

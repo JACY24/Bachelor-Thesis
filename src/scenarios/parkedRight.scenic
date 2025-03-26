@@ -12,6 +12,12 @@ if globalParameters['seed']:
     random.seed(globalParameters['seed'])
     numpy.random.seed(globalParameters['seed'])
 
+behavior FollowLaneUntilIntersect(laneToFollow):
+    do FollowLaneBehavior(laneToFollow=laneToFollow) until ego.intersects(parkedCar)
+    take SetBrakeAction(1)
+    take SetSpeedAction(0)
+    take SetThrottleAction(0)
+
 # Select a starting spot for the cars
 select_road = Uniform(*network.roads)
 select_lanegroup = Uniform(*select_road.laneGroups)
@@ -20,7 +26,7 @@ spot = new OrientedPoint on rightCurb
 
 # Create the cars with the correct behavior
 ego = new Car left of spot by 0.5,
-                    with behavior FollowLaneBehavior(laneToFollow=select_lanegroup.lanes[0])
+                    with behavior FollowLaneUntilIntersect(laneToFollow=select_lanegroup.lanes[0])
 parkedCar = new Car ahead of ego by Range(3, 6)
 
 # Record the observations of interest

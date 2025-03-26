@@ -29,7 +29,6 @@ behavior Brake():
 
 behavior BrakewhenIntersecting(lane):
     do FollowLaneBehavior(laneToFollow=lane) until ego.intersects(parkedCar)
-    print('brake but no alarm')
     take SetBrakeAction(1)
     take SetSpeedAction(0)
     take SetThrottleAction(0)

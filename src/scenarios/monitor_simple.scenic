@@ -23,17 +23,20 @@ behavior Brake():
     global alarm 
     alarm = True
     take SetBrakeAction(1)
+
+behavior FollowLaneUntilIntersect(laneToFollow):
+    do FollowLaneBehavior(laneToFollow=laneToFollow) until ego.intersects(parkedCar)
+    take SetBrakeAction(1)
     take SetSpeedAction(0)
     take SetThrottleAction(0)
 
 # Do followlane behavior until monitor raises an alarm
 behavior FollowLaneWithMonitor(laneToFollow=None):
     try:
-        do FollowLaneBehavior(laneToFollow=laneToFollow)
+        do FollowLaneUntilIntersect(laneToFollow=laneToFollow)
     interrupt when monitor.check_for_alarm(round(parkedCar.distanceTo(ego.corners[1]), 4),
                                             round(parkedCar.distanceTo(ego.corners[0]), 4),
-                                            round(ego.steer, 4),
-                                            int(select_ego_lane == select_npc_lane)):
+                                            round(ego.steer, 4)):
         do Brake()
 
 # Select starting spot for the cars
@@ -43,7 +46,7 @@ select_ego_lane = Uniform(*select_lanegroup.lanes)
 
 # Create two cars with correct behavior
 ego = new Car on select_ego_lane.centerline,
-                    with behavior FollowLaneBehavior(laneToFollow=select_ego_lane)
+                    with behavior FollowLaneWithMonitor(laneToFollow=select_ego_lane)
 
 select_npc_lane = Uniform(*select_lanegroup.lanes)
 parkedCar = new Car on visible select_npc_lane.centerline#,
@@ -54,10 +57,9 @@ record round(ego.heading, 4) as drivingCarHeading
 record ego.intersects(parkedCar) as intersecting
 record ego.corners as drivingCorners
 record parkedCar.corners as parkedCorners
+record round(ego.speed, 4) as speed
 record round(ego.steer, 4) as steer
 record alarm as alarm
-record int(select_ego_lane == select_npc_lane) as same_lane
-
-require (select_ego_lane == select_npc_lane) implies eventually ego.intersects(parkedCar)
 
 terminate after 5 seconds
+

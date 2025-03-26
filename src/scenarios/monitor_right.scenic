@@ -25,10 +25,16 @@ behavior Brake():
     alarm = True
     take SetBrakeAction(1)
 
+behavior FollowLaneUntilIntersect(laneToFollow):
+    do FollowLaneBehavior(laneToFollow=laneToFollow) until ego.intersects(parkedCar)
+    take SetBrakeAction(1)
+    take SetSpeedAction(0)
+    take SetThrottleAction(0)
+
 # Do followlane behavior until monitor raises an alarm
 behavior FollowLaneWithMonitor(laneToFollow=None):
     try:
-        do FollowLaneBehavior(laneToFollow=laneToFollow)
+        do FollowLaneUntilIntersect(laneToFollow=laneToFollow)
     interrupt when monitor.check_for_alarm(round(parkedCar.distanceTo(ego.corners[1]), 4),
                                             round(parkedCar.distanceTo(ego.corners[0]), 4),
                                             round(ego.steer, 4)):

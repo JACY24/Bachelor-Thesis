@@ -7,6 +7,12 @@ param time_step = 1.0/10
 
 model scenic.simulators.newtonian.driving_model
 
+behavior FollowLaneUntilIntersect(laneToFollow):
+    do FollowLaneBehavior(laneToFollow=laneToFollow) until ego.intersects(parkedCar)
+    take SetBrakeAction(1)
+    take SetSpeedAction(0)
+    take SetThrottleAction(0)
+
 # Set a seed so that scene sampling becomes deterministic
 if globalParameters['seed']:
     random.seed(globalParameters['seed'])
@@ -19,7 +25,7 @@ start_spot = new OrientedPoint on select_lanegroup.lanes[-1].leftEdge
 
 # Create two cars with correct behavior
 ego = new Car left of start_spot by 0.5,
-                    with behavior FollowLaneBehavior(laneToFollow=select_lanegroup.lanes[-1])
+                    with behavior FollowLaneUntilIntersect(laneToFollow=select_lanegroup.lanes[-1])
 
 parkedCar = new Car ahead of ego by Range(3, 6)
 
